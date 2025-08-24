@@ -7,10 +7,14 @@ dotenv.config();
 
 const app = express();
 app.use(express.json());
-app.use(cors({
-  origin: 'http://localhost:5173',
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'production' 
+    ? 'https://book-review-frontend-xl5k.vercel.app/' // Replace with your frontend URL
+    : 'http://localhost:5173',
   credentials: true
-}));
+};
+
+app.use(cors(corsOptions));
 
 // Routes will be added here
 const authRoutes = require('./routes/authRoutes');
@@ -28,19 +32,18 @@ app.get('/', (req, res) => {
 res.send('Book Review Platform API');
 });
 
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-}).then(() => {
-  console.log("MongoDB connected");
-  console.log("✅ Mounting /api/auth routes...");
-
-  app.listen(process.env.PORT, () => {
-    console.log(`Server running on port ${process.env.PORT}`);
+// Connect to MongoDB
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log("✅ MongoDB connected successfully");
+    
+    // Start the server after successful DB connection
+    const port = process.env.PORT || 5000;
+    app.listen(port, () => {
+      console.log(`🚀 Server running on port ${port}`);
+    });
+  })
+  .catch(err => {
+    console.error("❌ MongoDB connection error:", err);
+    process.exit(1);
   });
-}).catch(err => {
-  console.error(err);
-});
-
-
- 
